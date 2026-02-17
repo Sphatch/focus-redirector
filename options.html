@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -20,10 +21,17 @@
       box-sizing: border-box;
     }
 
+    html, body {
+      min-height: 100%;
+    }
+
     body {
       margin: 0;
       padding: 24px;
       background: radial-gradient(circle at top right, #dbfbe8 0%, var(--bg) 45%);
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-attachment: fixed;
       color: var(--text);
       font-family: "Segoe UI", Tahoma, sans-serif;
     }
@@ -82,7 +90,8 @@
       letter-spacing: 0.04em;
     }
 
-    input[type="text"], input[type="url"] {
+    input[type="text"],
+    input[type="url"] {
       width: 100%;
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -128,7 +137,7 @@
       padding: 18px;
       border-radius: 14px;
       border: 1px solid #b4edc7;
-      background: linear-gradient(135deg, #eefff4 0%, #f6fff9 100%);
+      background: linear-gradient(135deg, #dcfce7 0%, #ecfdf3 100%);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
 
@@ -207,7 +216,8 @@
       background: #fff;
     }
 
-    th, td {
+    th,
+    td {
       border-bottom: 1px solid var(--border);
       padding: 10px;
       vertical-align: top;
@@ -307,7 +317,12 @@
         width: 100%;
       }
 
-      table, thead, tbody, tr, th, td {
+      table,
+      thead,
+      tbody,
+      tr,
+      th,
+      td {
         display: block;
         width: 100%;
       }
@@ -328,6 +343,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="header">
@@ -371,7 +387,8 @@
             <div id="hourlyRateError" class="rate-error" aria-live="polite"></div>
           </div>
         </div>
-        <p class="metrics-caption">Time saved uses 17.5 minutes per prevented distraction (range: 10-25). Money saved is calculated per minute from your hourly rate.</p>
+        <p class="metrics-caption">Time saved uses 17.5 minutes per prevented distraction (range: 10-25). Money saved is
+          calculated per minute from your hourly rate.</p>
       </div>
 
       <table aria-label="Redirect Rules">
@@ -417,4 +434,5 @@
 
   <script src="options.js"></script>
 </body>
+
 </html>

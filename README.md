@@ -12,6 +12,8 @@ Focus Redirector redirects top-level navigation for configured hostnames and the
 - Redirect metrics in Options:
   - Total redirect count
   - Per-rule redirect count
+  - Estimated time saved (17.5 minutes per prevented distraction)
+  - Estimated money saved based on your hourly rate
 
 ## Rule Model
 
@@ -47,6 +49,16 @@ This ensures redirects only happen when the browser is actually navigating to th
    - Target URL: `https://calendar.google.com/calendar/u/0/r`
 2. Keep rule enabled.
 3. Visit `https://youtube.com`, `https://www.youtube.com`, or another subdomain and it redirects.
+4. In Options, set your hourly rate to see estimated money saved.
+
+## Metrics Formula
+
+- Time saved:
+  - `total_redirects * 17.5 minutes`
+- Money saved:
+  - `hours_saved * hourly_rate`
+
+The 17.5 minute estimate is a midpoint based on a 10-25 minute range for unplanned distraction + refocus cost.
 
 ## Validation Rules
 

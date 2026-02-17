@@ -1,5 +1,7 @@
 const STORAGE_KEY = "redirect_rules";
 const METRICS_KEY = "redirect_metrics";
+const SETTINGS_KEY = "redirect_settings";
+const MINUTES_SAVED_PER_REDIRECT = 17.5;
 
 const addRuleForm = document.getElementById("addRuleForm");
 const newSourceHostnameInput = document.getElementById("newSourceHostname");
@@ -8,9 +10,14 @@ const rulesBody = document.getElementById("rulesBody");
 const ruleRowTemplate = document.getElementById("ruleRowTemplate");
 const formMessage = document.getElementById("formMessage");
 const metricsSummary = document.getElementById("metricsSummary");
+const timeSavedSummary = document.getElementById("timeSavedSummary");
+const moneySavedSummary = document.getElementById("moneySavedSummary");
+const hourlyRateInput = document.getElementById("hourlyRateInput");
+const hourlyRateError = document.getElementById("hourlyRateError");
 
 let rules = [];
 let metrics = { total_redirects: 0, per_rule: {} };
+let settings = { hourly_rate: null };
 
 function getStorageArea() {
   return chrome.storage.sync || chrome.storage.local;
@@ -161,8 +168,77 @@ function normalizeMetrics(rawMetrics) {
   return { total_redirects: totalRedirects, per_rule: perRule };
 }
 
+function normalizeSettings(rawSettings) {
+  if (!rawSettings || typeof rawSettings !== "object") {
+    return { hourly_rate: null };
+  }
+  const rate = Number(rawSettings.hourly_rate);
+  if (!Number.isFinite(rate) || rate < 0) {
+    return { hourly_rate: null };
+  }
+  return { hourly_rate: rate };
+}
+
+function validateHourlyRate(rawValue) {
+  const trimmed = String(rawValue || "").trim();
+  if (!trimmed) {
+    return { valid: true, value: null };
+  }
+
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) {
+    return { valid: false, error: "Hourly rate must be a valid number." };
+  }
+  if (parsed < 0) {
+    return { valid: false, error: "Hourly rate cannot be negative." };
+  }
+  return { valid: true, value: Number(parsed.toFixed(2)) };
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+function formatDurationFromMinutes(totalMinutes) {
+  if (totalMinutes < 60) {
+    return `${totalMinutes.toFixed(1)}m`;
+  }
+
+  if (totalMinutes < 1440) {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = Math.round(totalMinutes % 60);
+    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  }
+
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.round((totalMinutes % 1440) / 60);
+  return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+}
+
+function formatMoneyCompact(value) {
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(1)}k`;
+  }
+  return formatCurrency(value);
+}
+
 function renderMetricsSummary() {
-  metricsSummary.textContent = `Total redirects: ${metrics.total_redirects}`;
+  metricsSummary.textContent = String(metrics.total_redirects);
+  const minutesSaved = metrics.total_redirects * MINUTES_SAVED_PER_REDIRECT;
+  timeSavedSummary.textContent = formatDurationFromMinutes(minutesSaved);
+
+  if (Number.isFinite(settings.hourly_rate)) {
+    const perMinuteRate = settings.hourly_rate / 60;
+    const moneySaved = minutesSaved * perMinuteRate;
+    moneySavedSummary.textContent = formatMoneyCompact(moneySaved);
+  } else {
+    moneySavedSummary.textContent = "$0.00";
+  }
 }
 
 function createEmptyStateRow() {
@@ -296,6 +372,21 @@ async function loadMetrics() {
   renderRules();
 }
 
+async function persistSettings() {
+  await storageSet({ [SETTINGS_KEY]: settings });
+}
+
+function renderSettings() {
+  hourlyRateInput.value = Number.isFinite(settings.hourly_rate) ? settings.hourly_rate.toFixed(2) : "";
+}
+
+async function loadSettings() {
+  const result = await storageGet(SETTINGS_KEY);
+  settings = normalizeSettings(result[SETTINGS_KEY]);
+  renderSettings();
+  renderMetricsSummary();
+}
+
 addRuleForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -334,9 +425,41 @@ loadMetrics().catch((error) => {
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
+  const usingSync = Boolean(chrome.storage.sync);
+
   if (areaName === "local" && changes[METRICS_KEY]) {
     metrics = normalizeMetrics(changes[METRICS_KEY].newValue);
     renderMetricsSummary();
     renderRules();
   }
+
+  if ((usingSync && areaName === "sync") || (!usingSync && areaName === "local")) {
+    if (changes[SETTINGS_KEY]) {
+      settings = normalizeSettings(changes[SETTINGS_KEY].newValue);
+      renderSettings();
+      renderMetricsSummary();
+    }
+  }
+});
+
+hourlyRateInput.addEventListener("input", async () => {
+  const validation = validateHourlyRate(hourlyRateInput.value);
+  if (!validation.valid) {
+    hourlyRateError.textContent = validation.error;
+    return;
+  }
+
+  hourlyRateError.textContent = "";
+  settings = { hourly_rate: validation.value };
+  renderMetricsSummary();
+
+  try {
+    await persistSettings();
+  } catch (error) {
+    showFormMessage(`Failed to save hourly rate: ${error.message}`, "error");
+  }
+});
+
+loadSettings().catch((error) => {
+  showFormMessage(`Failed to load settings: ${error.message}`, "error");
 });

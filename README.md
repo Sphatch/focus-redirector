@@ -1,3 +1,5 @@
+![Focus Redirector Banner](focus-redirector.png)
+
 # Focus Redirector (Chrome Extension, Manifest V3)
 
 Focus Redirector redirects top-level navigation for configured hostnames and their subdomains to target URLs.

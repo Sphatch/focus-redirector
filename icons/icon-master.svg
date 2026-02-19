@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-  <!-- transparent background; large centered bullseye -->
-  <circle cx="64" cy="64" r="56" fill="#0f766e"/>
-  <circle cx="64" cy="64" r="43" fill="#ffffff"/>
-  <circle cx="64" cy="64" r="30" fill="#14b8a6"/>
-  <circle cx="64" cy="64" r="18" fill="#ffffff"/>
-  <circle cx="64" cy="64" r="8" fill="#0f766e"/>
-</svg>
